@@ -221,3 +221,131 @@ git push -u origin main
 5.  **继续流水线**:
     - 在本地项目根目录创建 `.env` 文件并填入您的API密钥。
     - 您现在可以从 `Part 3` 中的第3步（序列化表格）或第4步（数据注入）开始，继续执行所有剩余的命令。 
+
+---
+
+## 附录：强制全量推送覆盖命令
+
+### 问题背景
+项目中的`.gitignore`文件忽略了重要的中间文件目录：
+```
+data/test_set/debug_data
+data/test_set/databases
+data/erc2_set/debug_data  
+data/erc2_set/databases
+```
+
+这些目录包含了**复现过程的关键中间产物**，对于学习和验证非常重要。
+
+### 🚨 强制全量推送覆盖命令
+
+**步骤1: 强制添加所有文件（包括被忽略的）**
+```bash
+# 进入项目根目录
+cd RAG_Challenge_Reproducibility
+
+# 强制添加所有文件，包括.gitignore忽略的文件
+git add -A
+git add -f data/test_set/debug_data/
+git add -f data/test_set/databases/
+git add -f data/erc2_set/debug_data/
+git add -f data/erc2_set/databases/
+
+# 检查添加状态
+git status --porcelain | head -20
+```
+
+**步骤2: 提交所有更改**
+```bash
+# 提交所有文件（包括中间产物）
+git commit -m "feat: 完整项目数据 - 包含所有中间处理文件和数据库"
+```
+
+**步骤3: 强制推送覆盖远程仓库**
+```bash
+# 方法1: 普通推送 (推荐)
+git push origin main
+
+# 方法2: 强制推送 (谨慎使用)
+git push --force-with-lease origin main
+
+# 方法3: 完全强制覆盖 (最后手段)
+git push --force origin main
+```
+
+### 📊 验证推送结果
+
+**检查推送状态**:
+```bash
+# 确认本地和远程同步
+git status
+
+# 查看最新提交
+git log --oneline -3
+
+# 验证重要文件是否在远程
+git ls-remote --heads origin
+```
+
+**验证关键文件存在**:
+```bash
+# 检查中间文件是否被正确跟踪
+git ls-files | grep -E "(debug_data|databases)" | head -10
+
+# 确认文件大小合理
+du -sh data/test_set/debug_data/
+du -sh data/test_set/databases/
+```
+
+### ⚠️ 重要提醒
+
+1. **强制推送风险**: `--force`命令会覆盖远程历史，请确保您有权限
+2. **文件大小**: 中间文件可能较大，确保网络条件良好
+3. **备份建议**: 推送前建议备份本地重要修改
+4. **协作影响**: 如果多人协作，强制推送会影响其他贡献者
+
+### 🎯 推荐的完整操作序列
+
+```bash
+# 一站式强制全量推送序列
+cd RAG_Challenge_Reproducibility
+
+# 添加所有文件（包括忽略的）
+git add -A
+git add -f data/*/debug_data/ data/*/databases/
+
+# 提交
+git commit -m "feat: 完整项目 - 所有源码、文档、中间文件和数据库"
+
+# 推送
+git push origin main
+
+# 验证
+git status && echo "✅ 推送完成！"
+```
+
+### 🔍 故障排除
+
+**如果推送被拒绝**:
+```bash
+# 拉取最新更改后再推送
+git pull --rebase origin main
+git push origin main
+```
+
+**如果文件过大**:
+```bash
+# 使用Git LFS管理大文件
+git lfs track "*.faiss" "*.json"
+git add .gitattributes
+git commit -m "feat: 添加Git LFS支持"
+git push origin main
+```
+
+**如果需要清理历史**:
+```bash
+# 清理大文件历史 (谨慎使用)
+git filter-branch --force --index-filter \
+'git rm --cached --ignore-unmatch data/*/databases/*.faiss' \
+--prune-empty --tag-name-filter cat -- --all
+``` 
