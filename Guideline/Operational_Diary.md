@@ -123,6 +123,32 @@ python ../../main.py parse-pdfs
 - **预期结果**: 命令成功执行，解析后的文件将出现在新建的`debug_data/parsed_reports/`目录中。
 - **[👉 点击此处查看PDF解析任务的技术详解](./Pipeline_Analysis.md)**
 
+### 3. 序列化表格 (可选但推荐)
+此步骤将解析出的表格转换为对LLM更友好的格式。
+```bash
+# (仍在 data/test_set 目录下)
+python ../../main.py serialize-tables
+```
+- **预期结果**: 命令执行成功，`debug_data`中会生成包含序列化表格的新JSON文件。
+
+### 4. 数据注入 (创建数据库)
+此步骤是RAG的核心之一，它会读取解析后的文本，通过API生成向量，并构建本地检索引擎。
+```bash
+# (仍在 data/test_set 目录下)
+# --config no_ser_tab 表示使用未序列化表格的数据
+python ../../main.py process-reports --config no_ser_tab
+```
+- **预期结果**: 命令执行时间较长，因为它会为大量文本块调用Embedding API。成功后，`databases`目录下会生成新的FAISS和BM25索引文件。
+
+### 5. 处理问题 (执行RAG问答)
+这是最后一步，模拟用户提问，并使用我们构建的RAG系统来生成答案。
+```bash
+# (仍在 data/test_set 目录下)
+# --config max_nst_o3m 是原作者效果最好的配置之一
+python ../../main.py process-questions --config max_nst_o3m
+```
+- **预期结果**: 系统会处理测试集中的问题，并最终在`debug_data/`相应目录中生成包含答案的JSON文件。
+
 ---
 
 ## Part 4: 保存工作与同步 (通用步骤)
@@ -156,3 +182,42 @@ git commit -m "feat: Complete initial setup and PDF parsing"
 # 4. 推送到GitHub
 git push -u origin main
 ``` 
+
+---
+
+## 附录：混合工作流指南 (云端GPU解析 + 本地CPU执行)
+
+本部分为特殊场景提供指导：您已在云端GPU服务器上完成了计算最密集的第一步（PDF解析），并希望在没有GPU的本地个人电脑上继续执行后续步骤。
+
+### 核心挑战与解决方案
+
+- **挑战**: 您在云端安装的PyTorch是为NVIDIA GPU编译的（依赖CUDA工具包）。在没有GPU的本地电脑上，这个版本的PyTorch无法安装或运行。
+- **解决方案**: 在本地电脑上，我们必须安装**纯CPU版本**的PyTorch。它功能完整，只是所有计算都由CPU完成。对于后续主要依赖API调用的步骤来说，这完全足够。
+
+### 本地复现步骤
+
+1.  **同步代码**: 确保您已将云端的所有代码和解析好的`debug_data`文件夹通过Git推送到您的GitHub仓库，然后在本地电脑上 `git pull` 或 `git clone` 最新的版本。
+
+2.  **创建本地虚拟环境**:
+    ```bash
+    # 在项目目录下
+    python -m venv venv
+    source venv/bin/activate  # macOS/Linux
+    # venv\Scripts\Activate.ps1 # Windows
+    ```
+
+3.  **安装CPU版PyTorch**:
+    ```bash
+    # 这是关键区别！此命令不依赖任何GPU驱动。
+    pip install torch torchvision torchaudio
+    ```
+
+4.  **安装其余依赖**:
+    ```bash
+    # pip会自动跳过已安装的torch
+    pip install -e . -r requirements.txt
+    ```
+
+5.  **继续流水线**:
+    - 在本地项目根目录创建 `.env` 文件并填入您的API密钥。
+    - 您现在可以从 `Part 3` 中的第3步（序列化表格）或第4步（数据注入）开始，继续执行所有剩余的命令。 
