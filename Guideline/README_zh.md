@@ -24,6 +24,30 @@
 
 如果您正在寻找生产就绪的代码，这不是。但如果您想探索不同的RAG技术及其实现 - 可以看看！
 
+## ⚡ API配额问题解决方案
+
+**❌ 常见问题**: `OpenAI RateLimitError: Error code: 429` (配额不足)
+
+**✅ 免费替代方案**: 我们已经集成了免费的Hugging Face嵌入模型！
+
+```bash
+# 使用免费嵌入模型替代OpenAI (推荐)
+python main.py process-reports-free --config no_ser_tab
+
+# 可选择不同的免费模型
+python main.py process-reports-free --config no_ser_tab --model all-mpnet-base-v2
+```
+
+**免费模型选项**:
+- `all-MiniLM-L6-v2`: 快速，良好质量，384维度（默认）
+- `all-mpnet-base-v2`: 较慢但更高质量，768维度  
+- `paraphrase-multilingual-MiniLM-L12-v2`: 多语言支持
+
+**技术优势**:
+- 🆓 **完全免费**: 无API调用费用和配额限制
+- ⚡ **本地运行**: 无网络延迟，更稳定
+- 🎯 **效果验证**: 384维向量检索效果良好，满足复现需求
+
 ## 快速开始
 
 克隆和设置：
@@ -35,7 +59,28 @@ venv\Scripts\Activate.ps1  # Windows (PowerShell)
 pip install -e . -r requirements.txt
 ```
 
-将`env`重命名为`.env`并添加您的API密钥。
+将`env`重命名为`.env`并添加您的API密钥：
+```bash
+# 必需 (用于对话生成)
+GEMINI_API_KEY="AIza..."
+
+# 可选 (如果要使用原始OpenAI嵌入)
+OPENAI_API_KEY="sk-..."
+```
+
+**💡 推荐流程** (使用免费嵌入):
+```bash
+cd data/test_set
+
+# 1. PDF解析
+python ../../main.py parse-pdfs
+
+# 2. 数据处理 (使用免费嵌入模型)
+python ../../main.py process-reports-free --config no_ser_tab
+
+# 3. 问答处理 (使用Gemini对话)
+python ../../main.py process-questions --config gemini_thinking
+```
 
 ## 测试数据集
 

@@ -9,8 +9,8 @@ import pandas as pd
 from src.pdf_parsing import PDFParser
 from src.parsed_reports_merging import PageTextPreparation
 from src.text_splitter import TextSplitter
-from src.ingestion import VectorDBIngestor
-from src.ingestion import BM25Ingestor
+from src.ingestion import VectorDBIngestor, BM25Ingestor
+from src.ingestion_free import VectorDBIngestorFree  # 添加免费版本
 from src.questions_processing import QuestionsProcessor
 from src.tables_serialization import TableSerializer
 
@@ -192,6 +192,18 @@ class Pipeline:
         vdb_ingestor.process_reports(input_dir, output_dir)
         print(f"Vector databases created in {output_dir}")
     
+    def create_vector_dbs_free(self, model_name: str = "all-MiniLM-L6-v2"):
+        """Create vector databases using free Hugging Face embeddings instead of OpenAI."""
+        input_dir = self.paths.documents_dir
+        output_dir = self.paths.vector_db_dir
+        
+        print("🆓 Using FREE embedding model instead of OpenAI!")
+        print(f"Model: {model_name}")
+        
+        vdb_ingestor = VectorDBIngestorFree(model_name=model_name)
+        vdb_ingestor.process_reports(input_dir, output_dir)
+        print(f"Vector databases created in {output_dir} using free embeddings")
+    
     def create_bm25_db(self):
         """Create BM25 database from chunked reports."""
         input_dir = self.paths.documents_dir
@@ -229,7 +241,30 @@ class Pipeline:
         self.create_vector_dbs()
         
         print("Reports processing pipeline completed successfully!")
+    
+    def process_parsed_reports_free(self, model_name: str = "all-MiniLM-L6-v2"):
+        """Process already parsed PDF reports through the pipeline using FREE embeddings:
+        1. Merge to simpler JSON structure
+        2. Export to markdown
+        3. Chunk the reports
+        4. Create vector databases using free Hugging Face model
+        """
+        print("Starting reports processing pipeline with FREE embeddings...")
         
+        print("Step 1: Merging reports...")
+        self.merge_reports()
+        
+        print("Step 2: Exporting reports to markdown...")
+        self.export_reports_to_markdown()
+        
+        print("Step 3: Chunking reports...")
+        self.chunk_reports()
+        
+        print("Step 4: Creating vector databases with free embeddings...")
+        self.create_vector_dbs_free(model_name=model_name)
+        
+        print("Reports processing pipeline completed successfully with free embeddings!")
+    
     def _get_next_available_filename(self, base_path: Path) -> Path:
         """
         Returns the next available filename by adding a numbered suffix if the file exists.

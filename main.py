@@ -47,6 +47,18 @@ def process_reports(config):
     pipeline.process_parsed_reports()
 
 @cli.command()
+@click.option('--config', type=click.Choice(['ser_tab', 'no_ser_tab']), default='no_ser_tab', help='Configuration preset to use')
+@click.option('--model', default='all-MiniLM-L6-v2', help='Free embedding model to use (all-MiniLM-L6-v2, all-mpnet-base-v2, etc.)')
+def process_reports_free(config, model):
+    """Process parsed reports using FREE Hugging Face embeddings instead of OpenAI."""
+    root_path = Path.cwd()
+    run_config = preprocess_configs[config]
+    pipeline = Pipeline(root_path, run_config=run_config)
+    
+    click.echo(f"🆓 Processing parsed reports with FREE embeddings (config={config}, model={model})...")
+    pipeline.process_parsed_reports_free(model_name=model)
+
+@cli.command()
 @click.option('--config', type=click.Choice(['base', 'pdr', 'max', 'max_no_ser_tab', 'max_nst_o3m', 'max_st_o3m', 'ibm_llama70b', 'ibm_llama8b', 'gemini_thinking']), default='base', help='Configuration preset to use')
 def process_questions(config):
     """Process questions using the pipeline."""

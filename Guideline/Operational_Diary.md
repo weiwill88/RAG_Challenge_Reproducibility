@@ -173,11 +173,11 @@ git remote -v
 git add .
 
 # 2. 配置Git身份 (首次在新环境中提交时需要)
-git config user.email "your_email@example.com"
-git config user.name "Your GitHub Username"
+git config user.email "weiwill666@gmail.com"
+git config user.name "weiwill88"
 
 # 3. 提交变更
-git commit -m "feat: Complete initial setup and PDF parsing"
+git commit -m "feat: 完成第一版流程"
 
 # 4. 推送到GitHub
 git push -u origin main
