@@ -201,7 +201,16 @@ git remote -v
 git add .
 ```
 
-**b. 提交变更**
+**b. 配置Git身份 (首次提交时需要)**
+> **背景**: `git commit` 命令需要知道是谁进行的提交。首次在新的服务器环境（或任何未配置过的机器）上提交时，你需要设置你的用户名和邮箱。否则，你会遇到 `Please tell me who you are.` 的错误。这个设置只需要在每个环境中进行一次。
+
+```bash
+# 将下方命令中的邮箱和用户名替换为你自己的信息
+git config user.email "weiwll666@gmail.com"
+git config user.name "weiwill88"
+```
+
+**c. 提交变更**
 ```bash
 # -m 后面是本次提交的说明，描述你做了什么
 git commit -m "docs: Add operational diary and configure SSH"
